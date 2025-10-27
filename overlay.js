@@ -61,15 +61,8 @@
   continueBtn.textContent = 'Continue';
   continueBtn.disabled = true;
 
-  const cancelBtn = document.createElement('button');
-  cancelBtn.type = 'button';
-  cancelBtn.id = 'fg-cancel';
-  cancelBtn.className = 'fg-btn fg-ghost';
-  cancelBtn.textContent = 'Cancel';
-
   actions.appendChild(submitBtn);
   actions.appendChild(continueBtn);
-  actions.appendChild(cancelBtn);
 
   form.appendChild(answerArea);
   form.appendChild(feedback);
@@ -296,11 +289,6 @@
   });
 
   continueBtn.addEventListener('click', () => {
-    hideOverlay();
-  });
-
-  cancelBtn.addEventListener('click', () => {
-    // Allow closing only if allowed or used by user; for strict mode you can remove this.
     hideOverlay();
   });
 

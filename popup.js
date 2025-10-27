@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
             const tab = tabs && tabs[0];
             if (!tab || !tab.id) return;
-            chrome.tabs.sendMessage(tab.id, { action: 'ask_question', payload }, () => {});
+            chrome.tabs.sendMessage(tab.id, { action: 'ask_question', payload }, () => { });
         });
     }
 
@@ -100,4 +100,14 @@ document.addEventListener('DOMContentLoaded', () => {
             correctAnswer: 42
         });
     });
+    document.getElementById('language-select')?.addEventListener('change', (e) => {
+        const lang = e.target.value;
+        chrome.runtime.sendMessage({ action: 'setLanguage', lang }, (resp) => {
+            if (resp?.success) {
+                alert(`Language changed to ${lang.toUpperCase()}`);
+            }
+        });
+    });
 });
+
+
