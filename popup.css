@@ -1,0 +1,103 @@
+/* General Body & Font Styling */
+body {
+    /* Sets the overall size of the popup window */
+    width: 300px;
+    
+    /* Sets the base font for the entire popup */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    
+    /* A dark background color consistent with your app's theme */
+    background-color: #1a1a2e;
+    
+    /* Sets the default text color to a light shade for contrast */
+    color: #e0e0e0;
+    
+    /* Removes the default margin that browsers add to the body */
+    margin: 0;
+    
+    /* Adds some internal spacing */
+    padding: 16px;
+}
+
+/* Form Container Styling */
+#login-form {
+    /* Uses flexbox to easily manage the layout of items inside the form */
+    display: flex;
+    
+    /* Stacks the form items vertically (email, password, button) */
+    flex-direction: column;
+    
+    /* Adds a small gap between each item in the form */
+    gap: 12px;
+}
+
+/* Input Field Styling */
+.login {
+    /* Adds padding inside the input fields to make them feel less cramped */
+    padding: 12px;
+    
+    /* A slightly lighter background than the body for contrast */
+    background-color: #2a2a4e;
+    
+    /* A subtle border */
+    border: 1px solid #4a4a7f;
+    
+    /* Rounds the corners of the input fields */
+    border-radius: 6px;
+    
+    /* Sets the color of the text the user types */
+    color: #ffffff;
+    
+    /* Removes the default outline that appears when an input is clicked */
+    outline: none;
+    
+    /* Adds a smooth transition effect for changes to border-color */
+    transition: border-color 0.2s ease-in-out;
+}
+
+/* Style for when an input field is being used (in focus) */
+.login:focus {
+    /* Changes the border color to a bright purple to indicate it's active */
+    border-color: #7e57c2;
+}
+
+/* Login Button Styling */
+.login-button {
+    padding: 12px;
+    background-color: #7e57c2; /* A primary brand color */
+    color: white;
+    font-weight: bold;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer; /* Changes the mouse cursor to a pointer on hover */
+    transition: background-color 0.2s ease-in-out;
+}
+
+/* Style for when the mouse is hovering over the login button */
+.login-button:hover {
+    background-color: #673ab7; /* A slightly darker shade for feedback */
+}
+
+/* Register Link (<a> tag) Styling */
+.register-button {
+    display: block; /* Makes the link take up the full width */
+    text-align: center;
+    margin-top: 16px; /* Adds space above the link */
+    color: #a0a0d0;
+    text-decoration: none; /* Removes the default underline */
+    font-size: 0.9em;
+    transition: color 0.2s ease-in-out;
+}
+
+/* Style for when the mouse is hovering over the register link */
+.register-button:hover {
+    color: #ffffff;
+}
+
+/* Status Message Styling */
+#status-message {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 0.9em;
+    min-height: 1.2em; 
+}

@@ -1,0 +1,144 @@
+#focusgate-overlay {
+  /* Hidden by default */
+  display: none; 
+
+  /* Style to cover the entire screen */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(20, 20, 35, 0.95);
+  z-index: 2147483647;
+
+  /* Centering properties that will be active when display is changed to flex by JS */
+  justify-content: center;
+  align-items: center;
+  
+  color: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+.focusgate-content-wrapper {
+  text-align: center;
+  padding: 40px;
+  background-color: #1e1e3f;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  max-width: 640px;
+  width: calc(100vw - 40px);
+}
+
+.focusgate-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.focusgate-message {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  opacity: 0.9;
+}
+
+.focusgate-prompt {
+  font-size: 1rem;
+  opacity: 0.8;
+}
+
+.focusgate-ai-question-area {
+  margin-top: 1.5rem;
+  padding: 20px;
+  background-color: rgba(0,0,0,0.2);
+  border-radius: 8px;
+}
+
+/* Dynamic question styles */
+.fg-question-text {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.fg-answer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.fg-options {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.fg-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255,255,255,0.06);
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.fg-option input[type="radio"] {
+  transform: scale(1.2);
+}
+
+.fg-input {
+  width: 100%;
+  padding: 12px 14px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  color: #fff;
+  outline: none;
+}
+
+.fg-input:focus {
+  border-color: #7e57c2;
+}
+
+.fg-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.fg-btn {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.fg-primary {
+  background: #7e57c2;
+  color: #fff;
+}
+.fg-primary:hover { background: #6d49b4; }
+
+.fg-success {
+  background: #2e7d32;
+  color: #fff;
+}
+.fg-success[disabled] {
+  background: #2e7d32aa;
+  cursor: not-allowed;
+}
+.fg-success:hover:not([disabled]) { background: #276b2b; }
+
+.fg-ghost {
+  background: transparent;
+  color: #ddd;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+.fg-ghost:hover { background: rgba(255,255,255,0.06); }
+
+.fg-feedback {
+  min-height: 1.2em;
+  font-size: 0.95rem;
+}
+.fg-feedback.fg-ok { color: #9ccc65; }
+.fg-feedback.fg-err { color: #ef9a9a; }
+.fg-feedback.fg-info { color: #b39ddb; }

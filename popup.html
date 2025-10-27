@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FocusGate</title>
+    <link rel="stylesheet" href="popup.css">
+    <script src="popup.js" defer></script>
+</head>
+<body>
+
+    <div id="login-view">
+        <h2>Login</h2>
+        <form id="login-form">
+            <input type="email" id="email" class="login" placeholder="Enter your email" required>
+            <input type="password" id="password" class="login" placeholder="Enter your password" required>
+            <button type="submit" class="login-button" id="submit-btn">Submit</button>
+        </form>
+        <a href="#" id="register-link" class="register-button">New User? Register</a>
+    </div>
+
+    <div id="loggedin-view" style="display: none;">
+        <h2>Welcome!</h2>
+        <p>FocusGate is active.</p>
+        <button id="logout-btn" class="login-button">Logout</button>
+        <button id="test-overlay-btn" class="login-button" style="margin-top:10px; background-color:#455a64;">Test Overlay</button>
+    </div>
+
+    <div id="devtools" style="margin-top:16px;">
+        <button id="test-overlay-anyway" class="login-button" style="background-color:#3949ab;">Test Overlay (No Login)</button>
+    </div>
+
+</body>
+</html>

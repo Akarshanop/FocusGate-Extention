@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="UTF-8">
+        <title>FocusGate Overlay (template)</title>
+        <link rel="stylesheet" href="overlay.css">
+        <script src="overlay.js" defer></script>
+</head>
+<body>
+        <!--
+            Note: This HTML file is a visual template. In the extension, the overlay is injected
+            by the content script `overlay.js` on blocked sites. You don't need to open this file
+            directly; it simply mirrors the structure created by JavaScript for reference.
+        -->
+        <div id="focusgate-overlay" style="display:none;">
+            <div class="focusgate-content-wrapper" role="dialog" aria-modal="true" aria-labelledby="fg-title">
+                <h1 id="fg-title" class="focusgate-title">FocusGate — Reduce Distractions</h1>
+                <p class="focusgate-message">Answer the question to continue.</p>
+
+                <div class="focusgate-ai-question-area">
+                    <div id="fg-question-text" class="fg-question-text">Question will appear here…</div>
+                    <form id="fg-answer-form" class="fg-answer-form" novalidate>
+                        <div id="fg-answer-area"></div>
+                        <div id="fg-feedback" class="fg-feedback" aria-live="polite"></div>
+                        <div class="fg-actions">
+                            <button type="submit" id="fg-submit" class="fg-btn fg-primary">Submit</button>
+                            <button type="button" id="fg-continue" class="fg-btn fg-success" disabled>Continue</button>
+                            <button type="button" id="fg-cancel" class="fg-btn fg-ghost">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+</body>
+</html>
