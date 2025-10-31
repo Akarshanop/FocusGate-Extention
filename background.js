@@ -1,22 +1,10 @@
-/********************************************************************
- *  FocusGate AI Edition — Chrome Built-in AI Integration (Safe Version)
- *  Features:
- *   1️⃣ Uses Prompt API (Gemini Nano) for dynamic question generation.
- *   2️⃣ Uses Translator API for user-preferred language support.
- *   3️⃣ Adds safety checks for when AI APIs aren't defined.
- *   4️⃣ Keeps full compatibility with your existing overlay UI.
- ********************************************************************/
 
 let userBlocklist = [];
 const temporarilyUnblocked = new Map();
 
-/* ------------------------------------------------------------------
-   🧭 Load User Blocklist (same as before)
------------------------------------------------------------------- */
 async function fetchBlocklist() {
   const result = await chrome.storage.sync.get(['authToken']);
   const token = result.authToken;
-
   if (!token) {
     userBlocklist = [];
     console.log('User not logged in. Blocker inactive.');
@@ -25,7 +13,7 @@ async function fetchBlocklist() {
 
   try {
     const response = await fetch('http://localhost:3000/api/sites', {
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` },
     });
     if (!response.ok) throw new Error(`Server responded ${response.status}`);
 
@@ -38,184 +26,226 @@ async function fetchBlocklist() {
   }
 }
 
-/* ------------------------------------------------------------------
-   🤖 AI Helpers — Built-in Prompt & Translator APIs (Safe)
------------------------------------------------------------------- */
-
-// ✅ Generate a question using Gemini Nano (Prompt API)
-async function generateAIQuestion(topic = 'focus and productivity') {
+async function fetchQuestionSettings() {
   try {
-    // 🧩 Safety check for `ai` availability
-    if (typeof ai === 'undefined' || !ai.languageModel) {
-      console.warn('Built-in AI APIs not available. Using fallback question.');
-      return {
-        question: 'What is 2 + 2?',
-        type: 'numerical',
-        correctAnswer: 4
-      };
-    }
+    const result = await chrome.storage.sync.get(['authToken']);
+    const token = result.authToken;
+    if (!token) throw new Error('User not authenticated');
 
-    const availability = await ai.languageModel.capabilities();
-    if (availability.available !== 'readily') {
-      console.warn('Gemini Nano not ready locally:', availability);
-      return {
-        question: 'What is 2 + 2?',
-        type: 'numerical',
-        correctAnswer: 4
-      };
-    }
+    const res = await fetch('http://localhost:3000/api/meta', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-    const session = await ai.languageModel.create({ model: 'gemini-nano' });
+    if (!res.ok) throw new Error(`Meta settings fetch failed ${res.status}`);
+    const metas = await res.json();
+    if (!metas || metas.length === 0) throw new Error('No user settings found');
 
-    const prompt = `
-    Create a JSON object with a single multiple-choice question related to ${topic}.
-    Example format:
-    {"question":"...", "options":["...","...","...","..."], "correctAnswer":"..."}
-    Keep question short and positive.`;
-
-    const result = await session.prompt(prompt);
-    const output = result.text().trim();
-    console.log('Prompt API output:', output);
-
-    // Try to parse JSON safely
-    const match = output.match(/\{[\s\S]*\}/);
-    const parsed = match ? JSON.parse(match[0]) : {};
-
+    const latestMeta = metas[0];
     return {
-      question: parsed.question || 'Which action helps improve focus?',
-      type: 'mcq',
-      options: parsed.options || ['Procrastination', 'Meditation', 'Scrolling', 'Multitasking'],
-      correctAnswer: parsed.correctAnswer || 'Meditation'
+      exam: latestMeta.exam || 'General',
+      topic: latestMeta.topic || 'focus',
+      difficulty: latestMeta.difficulty || 'medium',
+      format: latestMeta.format || 'mcq',
+      frequency: latestMeta.frequency || 5,
     };
   } catch (err) {
-    console.error('Prompt API error:', err);
+    console.warn('Could not fetch question settings:', err.message);
     return {
-      question: 'Focus question: What is 5 × 5?',
-      type: 'numerical',
-      correctAnswer: 25
+      exam: 'General',
+      topic: 'focus',
+      difficulty: 'medium',
+      format: 'mcq',
+      frequency: 5,
     };
   }
 }
 
-// ✅ Translate text into user’s preferred language (Translator API)
+async function generateAIQuestion(exam, topic, difficulty) {
+  try {
+    const aiModel = self.LanguageModel || chrome.ai?.languageModel;
+    if (!aiModel) {
+      console.warn('Prompt API not available, using fallback.');
+      return {
+        question: 'What is 2 + 2?',
+        options: ['3', '4', '5', '6'],
+        correctAnswer: '4',
+        type: 'mcq'
+      };
+    }
+
+    const availability = await aiModel.availability({});
+    console.log('AI Model availability:', availability);
+    if (availability !== 'available' && availability !== 'downloadable') {
+      console.warn('Gemini Nano not ready:', availability);
+      return {
+        question: 'What is 2 + 2?',
+        options: ['3', '4', '5', '6'],
+        correctAnswer: '4',
+        type: 'mcq'
+      };
+    }
+
+    const session = await aiModel.create({ temperature: 0.7, topK: 40 });
+    const prompt = `
+    Create ONE JSON multiple-choice question for exam "${exam}".
+    Topic: "${topic}", Difficulty: "${difficulty}".
+    Output ONLY JSON like this:
+    {"question":"...", "options":["...","...","...","..."], "correctAnswer":"..."}
+    `;
+
+    const output = await session.prompt(prompt);
+    console.log('🧠 Raw AI output:', output);
+
+    const jsonStart = output.indexOf('{');
+    const jsonEnd = output.lastIndexOf('}') + 1;
+    let parsed = {};
+    if (jsonStart !== -1 && jsonEnd > jsonStart) {
+      let rawJson = output.substring(jsonStart, jsonEnd);
+
+      // sanitize
+      rawJson = rawJson
+        .replace(/[\r\n]+/g, ' ')
+        .replace(/[“”]/g, '"')
+        .replace(/[‘’]/g, "'")
+        .replace(/\\(?!["\\/bfnrtu])/g, '\\\\')
+        .trim();
+
+      try {
+        parsed = JSON.parse(rawJson);
+        console.log('✅ Parsed AI JSON:', parsed);
+      } catch (err) {
+        console.warn('❌ JSON parse error:', err.message);
+        console.warn('Sanitized JSON string:', rawJson);
+      }
+    }
+
+    if (!parsed.question || !Array.isArray(parsed.options)) {
+      parsed = {
+        question: `Sample ${difficulty} question on ${topic}?`,
+        options: ['Option A', 'Option B', 'Option C', 'Option D'],
+        correctAnswer: 'Option A',
+      };
+      console.warn('⚠️ Using fallback parsed question:', parsed);
+    }
+
+    parsed.type = 'mcq';
+    return parsed;
+  } catch (err) {
+    console.error('AI Error:', err);
+    return {
+      question: `Focus question: What is 5 × 5?`,
+      options: ['20', '25', '30', '35'],
+      correctAnswer: '25',
+      type: 'numerical'
+    };
+  }
+}
+
 async function translateText(text, targetLang = 'en') {
   try {
-    // 🧩 Safety check for Translator API
-    if (typeof ai === 'undefined' || !ai.translator) {
-      console.warn('Translator API not available. Returning original text.');
-      return text;
-    }
+    const translatorApi = self.Translator || chrome.ai?.translator;
+    if (!translatorApi) return text;
 
-    const translator = await ai.translator.create({
-      sourceLanguage: 'en',
-      targetLanguage: targetLang
-    });
-    const result = await translator.translate(text);
+    const avail = await translatorApi.availability({ sourceLanguage: 'en', targetLanguage: targetLang });
+    if (avail !== 'available' && avail !== 'downloadable') return text;
+
+    const result = await translatorApi.translate({ text, target: targetLang, source: 'en' });
     return result.text;
-  } catch (err) {
-    console.warn('Translator fallback:', err);
-    return text; // fallback to English
+  } catch {
+    return text;
   }
 }
 
-/* ------------------------------------------------------------------
-   🚦 Main Tab Logic — Trigger on Blocked Sites
------------------------------------------------------------------- */
+async function getSessionDuration() {
+  const settings = await fetchQuestionSettings();
+  return (settings.frequency || 5) * 60 * 1000;
+}
+
+async function getSessionExpiry(domain) {
+  const data = await chrome.storage.session.get(domain);
+  return data[domain];
+}
+async function setSessionExpiry(domain, expiry) {
+  await chrome.storage.session.set({ [domain]: expiry });
+}
+async function removeSession(domain) {
+  await chrome.storage.session.remove(domain);
+}
+
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (changeInfo.status !== 'complete' || !tab.url) return;
   if (userBlocklist.length === 0) return;
 
   const domain = new URL(tab.url).hostname;
-  if (temporarilyUnblocked.has(domain)) return;
+  const session = await getSessionExpiry(domain);
+  if (session && Date.now() < session) return; // still unlocked
+  if (session) await removeSession(domain);
 
   const isBlocked = userBlocklist.some((p) => new RegExp(p).test(tab.url));
   if (!isBlocked) return;
 
-  console.log(`FocusGate: Blocked domain detected → ${domain}`);
+  console.log(`🚫 FocusGate blocked domain → ${domain}`);
 
-  // 🧠 Generate AI Question
-  const aiQuestion = await generateAIQuestion();
+  const settings = await fetchQuestionSettings();
+  let aiQuestion = await generateAIQuestion(settings.exam, settings.topic, settings.difficulty);
 
-  // 🌐 Translate question & options
   const { preferredLang = 'en' } = await chrome.storage.sync.get('preferredLang');
   aiQuestion.question = await translateText(aiQuestion.question, preferredLang);
-  if (Array.isArray(aiQuestion.options)) {
-    aiQuestion.options = await Promise.all(
-      aiQuestion.options.map((opt) => translateText(opt, preferredLang))
-    );
-  }
 
-  // 🚀 Send question payload to overlay
   try {
-    await chrome.tabs.sendMessage(tabId, {
+    console.log('🟣 Sending overlay to tab with question:', aiQuestion);
+    const sendResult = await chrome.tabs.sendMessage(tabId, {
       action: 'show_overlay',
       payload: {
         requestId: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        ...aiQuestion
-      }
+        ...aiQuestion,
+      },
     });
+    console.log('🟢 Overlay message dispatched:', sendResult);
   } catch (err) {
-    console.warn('Could not send overlay message:', err);
+    console.error('❌ Could not send overlay message:', err);
+
+    // Fallback: manually inject overlay.js & css if not already loaded
+    console.warn('⚙️ Injecting overlay script manually as fallback.');
+    try {
+      await chrome.scripting.insertCSS({ target: { tabId }, files: ['overlay.css'] });
+      await chrome.scripting.executeScript({ target: { tabId }, files: ['overlay.js'] });
+      // Re-send after injection
+      await chrome.tabs.sendMessage(tabId, {
+        action: 'show_overlay',
+        payload: aiQuestion,
+      });
+      console.log('✅ Overlay injected and re-sent.');
+    } catch (injErr) {
+      console.error('🚨 Overlay injection failed:', injErr);
+    }
   }
 });
 
-/* ------------------------------------------------------------------
-   💬 Runtime Message Handling (login/logout/language/overlay)
------------------------------------------------------------------- */
-chrome.runtime.onMessage.addListener((req, sender, sendResponse) => {
-  if (req.action === 'login') {
-    fetch('http://localhost:3000/api/users/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(req.payload)
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.token) {
-          chrome.storage.sync.set({ authToken: data.token }, () => {
-            fetchBlocklist();
-            sendResponse({ success: true });
-          });
-        } else {
-          sendResponse({ success: false, message: data.message });
-        }
-      })
-      .catch((err) => {
-        console.error('Login error:', err);
-        sendResponse({ success: false, message: 'Cannot connect to server.' });
-      });
-    return true;
-  }
-
-  if (req.action === 'checkAuth') {
-    chrome.storage.sync.get(['authToken'], (r) =>
-      sendResponse({ loggedIn: !!r.authToken })
-    );
-    return true;
-  }
-
-  if (req.action === 'logout') {
-    chrome.storage.sync.remove('authToken', () => {
-      userBlocklist = [];
-      console.log('User logged out. Blocker inactive.');
-      sendResponse({ success: true });
-    });
-    return true;
-  }
-
+chrome.runtime.onMessage.addListener(async (req, sender, sendResponse) => {
   if (req.action === 'overlay_answer') {
-    console.log('Overlay answered:', req.payload);
-    sendResponse?.({ status: 'received' });
+    const domain = new URL(sender.tab.url).hostname;
+    if (req.payload.correct) {
+      const duration = await getSessionDuration();
+      const expiry = Date.now() + duration;
+      await setSessionExpiry(domain, expiry);
+      temporarilyUnblocked.set(domain, expiry);
+      console.log(`✅ Unlocked ${domain} for ${(duration / 60000).toFixed(1)} mins`);
+    } else {
+      console.log(`❌ Incorrect answer for ${domain}, remains blocked.`);
+    }
+    sendResponse({ status: 'ok' });
     return true;
   }
 
-  // 🌍 Change preferred language
   if (req.action === 'setLanguage') {
-    chrome.storage.sync.set({ preferredLang: req.lang });
-    console.log('Preferred language updated →', req.lang);
+    await chrome.storage.sync.set({ preferredLang: req.lang });
+    console.log('🌐 Language updated →', req.lang);
     sendResponse({ success: true });
     return true;
   }
+
+  return true;
 });
 
 fetchBlocklist();

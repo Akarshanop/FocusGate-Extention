@@ -8,7 +8,8 @@
     "scripting",
     "storage",
     "tabs",
-    "aiLanguageModel"
+    "ai",
+    "unlimitedStorage" 
   ],
   "host_permissions": [
     "<all_urls>"
@@ -18,9 +19,15 @@
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["overlay.js"],
-      "css": ["overlay.css"],
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "overlay.js"
+      ],
+      "css": [
+        "overlay.css"
+      ],
       "run_at": "document_idle"
     }
   ],
